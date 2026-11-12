@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heat, Breaks, and Hidden Damage</title>
+<meta name="description" content="An interactive explainer for a College Station, Texas construction company: when is it hottest, how much rest a crew needs, and why long-term organ damage matters.">
+<style>
+  :root {
+    --bg: #fbf8f3;
+    --card: #ffffff;
+    --ink: #1f1b16;
+    --muted: #6b6258;
+    --line: #e4dccf;
+    --accent: #c2410c;
+    --accent-soft: #fde4d3;
+    --heat: #dc2626;
+    --shade: #2563eb;
+    --limit: #15803d;
+    --given: #1f1b16;
+    --bar: #f59e0b;
+    --over: #dc2626;
+    --shift: #fef3c7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17140f;
+      --card: #211d17;
+      --ink: #f3ede4;
+      --muted: #b3a998;
+      --line: #3a332a;
+      --accent: #fb923c;
+      --accent-soft: #3b2415;
+      --heat: #f87171;
+      --shade: #60a5fa;
+      --limit: #4ade80;
+      --given: #f3ede4;
+      --bar: #fbbf24;
+      --over: #f87171;
+      --shift: #2e2716;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.01em; }
+  header p.kicker { color: var(--accent); font-weight: 700; text-transform: uppercase; font-size: .8rem; letter-spacing: .08em; margin: 0 0 6px; }
+  header p.lede { font-size: 1.1rem; color: var(--muted); margin: 0; max-width: 46em; }
+  h2 { font-size: 1.35rem; margin: 40px 0 10px; }
+  h3 { font-size: 1.05rem; margin: 0 0 4px; }
+  p { margin: 0 0 12px; }
+  a { color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .grid { display: grid; gap: 16px; }
+  @media (min-width: 820px) { .controls-grid { grid-template-columns: 1fr 1fr; } }
+  .control label { display: flex; justify-content: space-between; gap: 12px; font-weight: 650; }
+  .control output { font-variant-numeric: tabular-nums; color: var(--accent); white-space: nowrap; }
+  .control .hint { color: var(--muted); font-size: .88rem; margin: 2px 0 0; }
+  input[type=range] { width: 100%; accent-color: var(--accent); margin: 8px 0 0; height: 28px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 4px; }
+  .checks label { display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
+  .checks input { width: 18px; height: 18px; accent-color: var(--accent); }
+  @media (min-width: 720px) { .sticky { position: sticky; top: 0; z-index: 5; padding-top: 8px; background: var(--bg); } }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 0; }
+  @media (min-width: 720px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .stat .v { font-size: 1.45rem; font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .stat .k { font-size: .82rem; color: var(--muted); }
+  .stat.warn .v { color: var(--over); }
+  figure { margin: 0; }
+  figcaption { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+  svg { width: 100%; height: auto; display: block; overflow: visible; }
+  svg text { fill: var(--muted); font-size: 12px; font-family: inherit; }
+  svg .axis-title { fill: var(--ink); font-size: 13px; font-weight: 600; }
+  svg .grid-line { stroke: var(--line); stroke-width: 1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .88rem; color: var(--muted); margin: 6px 0 4px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { display: inline-block; width: 18px; height: 4px; border-radius: 2px; }
+  .sw.box { height: 12px; width: 12px; border-radius: 3px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; font-variant-numeric: tabular-nums; }
+  caption { text-align: left; font-weight: 700; padding-bottom: 6px; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  td, tbody th { white-space: nowrap; }
+  thead th { vertical-align: bottom; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-weight: 650; font-size: .85rem; color: var(--muted); }
+  td.over { color: var(--over); font-weight: 700; }
+  .callout { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 12px 0; }
+  .organs { display: grid; gap: 12px; }
+  @media (min-width: 760px) { .organs { grid-template-columns: repeat(3, 1fr); } }
+  ul { padding-left: 1.2em; margin: 0 0 12px; }
+  li { margin-bottom: 6px; }
+  ol.refs { font-size: .9rem; color: var(--muted); padding-left: 1.4em; }
+  ol.refs li { margin-bottom: 8px; }
+  .small { font-size: .88rem; color: var(--muted); }
+  footer { margin-top: 48px; font-size: .88rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <p class="kicker">Extreme heat · College Station, Texas</p>
+  <h1>When is it too hot to keep working, and what does the heat do that you can't see?</h1>
+  <p class="lede">A construction company in College Station has to decide when crews work, how often they rest, and how long a break needs to be. This page models a typical July day and shows how the time of day, the kind of work, and the break schedule combine to decide whether workers stay within federal heat-safety limits.</p>
+</header>
+
+<h2>The issue in plain language</h2>
+<p>Your body makes heat whenever you work, and the harder you work, the more heat it makes. On a cool day that heat escapes easily. On a College Station summer afternoon, hot and humid air makes it hard for sweat to cool you, and the sun adds even more heat. When the body cannot get rid of heat fast enough, core temperature climbs.</p>
+<p>Most companies watch for the problems they can see: heat stroke, fainting (heat syncope), and severe dehydration. Those are real and can kill. But research also links repeated overheating to damage that builds up quietly over a summer and over a career: <strong>kidney injury</strong>, strain on the <strong>heart</strong>, and, after a heat stroke, lasting <strong>brain</strong> problems. A schedule that avoids collapses can still let workers spend hours each week above the safe limit.</p>
+<p>The safe limit used here comes from <abbr title="National Institute for Occupational Safety and Health">NIOSH</abbr>, the federal research agency for worker safety. Its limits say how much heat a healthy worker can handle at a given workload; they are meant to keep core body temperature within about 1&nbsp;°C (1.8&nbsp;°F) of normal. When conditions are over the limit, the fix is to rest part of each hour so the hour's average stays under it. <a href="#refs">[5, 6]</a></p>
+
+<div class="callout"><strong>Why this matters in Texas:</strong> construction is about 7% of the U.S. workforce but more than a third of heat-related worker deaths, and Texas had more construction heat deaths from 2011 to 2023 than any other state. <a href="#refs">[11]</a> There is no final federal heat standard, and a 2023 Texas law blocked cities from requiring water breaks, so break schedules are largely up to employers. <a href="#refs">[9, 10]</a></div>
+
+<h2>Explore it</h2>
+<p>Each slider changes one thing about the workday. The graphs, the table, and the numbers below update as you move them.</p>
+
+<section class="card grid controls-grid" aria-label="Controls">
+  <div class="control">
+    <label for="hi">Day's high temperature <output id="hiOut"></output></label>
+    <input id="hi" type="range" min="88" max="108" step="1" value="95">
+    <p class="hint">The afternoon high, measured in the shade. A normal July day in College Station peaks around 94–97&nbsp;°F; 105&nbsp;°F and up is a heat wave. <a href="#refs">[1]</a></p>
+  </div>
+  <div class="control">
+    <label for="work">How hard the crew is working <output id="workOut"></output></label>
+    <input id="work" type="range" min="0" max="3" step="1" value="2">
+    <p class="hint">How much heat the body makes, in watts. Light: operating equipment, standing watch. Moderate: hand tools, general carpentry. Heavy: carrying loads, shoveling, mixing cement. Very heavy: masonry, sledgehammer work. <a href="#refs">[7]</a></p>
+  </div>
+  <div class="control">
+    <label for="start">Shift start time <output id="startOut"></output></label>
+    <input id="start" type="range" min="5" max="10" step="1" value="7">
+    <p class="hint">A 10-hour shift starts here. Starting earlier moves work out of the late afternoon, when it is hottest.</p>
+  </div>
+  <div class="control">
+    <label for="rest">Rest the company gives <output id="restOut"></output></label>
+    <input id="rest" type="range" min="0" max="45" step="1" value="8">
+    <p class="hint">Minutes of shaded rest per hour. OSHA's 2024 proposed rule would require 15 minutes every 2 hours in high heat, which works out to about 7.5 minutes per hour. <a href="#refs">[9]</a></p>
+  </div>
+  <div class="checks" style="grid-column: 1 / -1">
+    <label><input id="sun" type="checkbox" checked> Work is in direct sun</label>
+    <label><input id="acc" type="checkbox" checked> Workers are acclimatized (used to the heat)</label>
+  </div>
+</section>
+
+<div class="sticky">
+  <div class="stats" aria-live="polite">
+    <div class="stat"><div class="v" id="sPeak"></div><div class="k">Hottest time of day (peak heat stress)</div></div>
+    <div class="stat"><div class="v" id="sFirst"></div><div class="k">First hour of the shift that needs extra rest</div></div>
+    <div class="stat" id="sOverBox"><div class="v" id="sOver"></div><div class="k">Minutes per shift worked over the safe limit</div></div>
+    <div class="stat" id="sSeasonBox"><div class="v" id="sSeason"></div><div class="k">Hours over the limit per summer, if every workday were like this (65 days)</div></div>
+  </div>
+</div>
+
+<section class="card" style="margin-top: 8px">
+  <figure>
+    <h3 id="c1title">Heat stress through a typical July day in College Station vs. the safe limit for continuous work</h3>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw" style="background:var(--heat)"></i>Heat stress where the crew works (WBGT)</span>
+      <span><i class="sw" style="background:var(--shade)"></i>Heat stress in the shade (WBGT)</span>
+      <span><i class="sw" style="background:var(--limit)"></i>NIOSH limit for working the full hour</span>
+      <span><i class="sw box" style="background:var(--shift);outline:1px solid var(--line)"></i>The shift</span>
+    </div>
+    <svg id="chart1" viewBox="0 0 760 330" role="img" aria-labelledby="c1title"></svg>
+    <figcaption>WBGT (wet bulb globe temperature) is the heat-stress measure safety agencies use. It combines air temperature, humidity, and sunshine into one number. Because it weights humidity heavily, it reads lower than the air temperature. Where the red line is above the green line, workers cannot work the full hour without going over the limit.</figcaption>
+  </figure>
+</section>
+
+<section class="card" style="margin-top: 16px">
+  <figure>
+    <h3 id="c2title">Rest needed in each hour of the shift vs. rest the company gives</h3>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw box" style="background:var(--bar)"></i>Rest needed (covered by the break schedule)</span>
+      <span><i class="sw box" style="background:var(--over)"></i>Rest needed but not given = minutes worked over the limit</span>
+      <span><i class="sw" style="background:var(--given)"></i>Rest the company gives</span>
+    </div>
+    <svg id="chart2" viewBox="0 0 760 320" role="img" aria-labelledby="c2title"></svg>
+    <figcaption>Each bar is one hour of the shift. Its height is how many minutes of shaded rest that hour needs to stay under the NIOSH limit. Red means the break schedule falls short, so those minutes are spent working while overheated.</figcaption>
+  </figure>
+</section>
+
+<p class="callout" id="advice" style="margin-top: 16px"></p>
+
+<section class="card" style="margin-top: 16px">
+  <div class="table-wrap">
+    <table>
+      <caption>Hour-by-hour conditions and work/rest schedule for this shift</caption>
+      <thead>
+        <tr>
+          <th scope="col">Hour starting</th>
+          <th scope="col">Air temp (°F)</th>
+          <th scope="col">Heat index (°F)</th>
+          <th scope="col">WBGT at work (°F)</th>
+          <th scope="col">Safe work (min/hr)</th>
+          <th scope="col">Rest needed (min/hr)</th>
+          <th scope="col">Rest given (min/hr)</th>
+          <th scope="col">Over limit (min)</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="small" style="margin-top:8px">Heat index is the "feels like" temperature in the shade that the weather service reports <a href="#refs">[3]</a>; it is shown because it is what most crews hear on the news. The work/rest numbers come from WBGT, which also counts the sun.</p>
+</section>
+
+<h2>What to notice when you move the sliders</h2>
+<ul>
+  <li><strong>Heat and workload multiply each other.</strong> At 7&nbsp;a.m., heavy work needs no extra rest. By mid-afternoon the same work needs a large share of each hour off. Switch the workload to light and the afternoon problem mostly disappears. A hotter day hurts a heavy-work crew far more than a light-work crew, so the high-temperature slider matters most when the workload slider is high.</li>
+  <li><strong>The hottest time is mid-to-late afternoon, not noon.</strong> Air temperature peaks around 4&nbsp;p.m., and the sun is still strong then. Heat stress at work peaks between about 2 and 4&nbsp;p.m.</li>
+  <li><strong>Moving the start time is the cheapest fix.</strong> Slide the start time earlier and watch the red minutes shrink. The same 10 hours of work produce much less over-limit time when they avoid the afternoon.</li>
+  <li><strong>A fixed break rule is not enough on its own.</strong> About 8 minutes of rest per hour can be plenty in the morning and far too little in the afternoon. Breaks should get longer as the day heats up.</li>
+  <li><strong>New workers are at higher risk.</strong> Uncheck "acclimatized." NIOSH sets a lower limit for workers who have not had about a week or two to adjust to heat, and red minutes appear sooner. <a href="#refs">[6]</a></li>
+  <li><strong>Shade matters.</strong> Uncheck "direct sun" to see how much shade over the work area lowers heat stress.</li>
+</ul>
+
+<h2>Why "no one collapsed" is not the same as "no one was harmed"</h2>
+<p>The red minutes above are the exposure that research links to damage that does not show up the same day. There is no validated formula that turns minutes over the limit into a percentage chance of kidney or heart disease, so this page does not invent one. It counts the exposure; the research below shows why that exposure is worth reducing.</p>
+<div class="organs">
+  <div class="card">
+    <h3>Kidneys</h3>
+    <p>Sweating and a rising core temperature reduce blood flow to the kidneys. In one summer-long study of construction workers in Saudi Arabia, 18% developed signs of kidney injury. <a href="#refs">[12]</a> A 2025 U.S. study of construction workers found that higher core temperature during a shift predicted markers of acute kidney injury by the end of that shift. <a href="#refs">[13]</a> Researchers suspect that repeated injuries like this can add up to chronic kidney disease. <a href="#refs">[13, 15]</a></p>
+  </div>
+  <div class="card">
+    <h3>Heart</h3>
+    <p>To cool down, the heart pumps more blood to the skin while dehydration shrinks the blood volume it has to work with. Heart rate climbs and the heart works harder for the whole time a worker is overheated. Researchers say the link between heat and heart disease in the general population is well established, but long-term studies of workers are still scarce. <a href="#refs">[16]</a> Workers with high blood pressure, diabetes, or heart disease are more vulnerable. <a href="#refs">[17]</a></p>
+  </div>
+  <div class="card">
+    <h3>Brain</h3>
+    <p>Heat stroke happens when core temperature passes about 40&nbsp;°C (104&nbsp;°F) and the brain starts to malfunction. In a review of published heat stroke cases, about a third of survivors whose outcome was known had permanent nerve or brain damage, often to the cerebellum, which controls balance and coordination. Many were young and healthy. <a href="#refs">[18, 19]</a> Every hour over the limit raises the chance of reaching that point.</p>
+  </div>
+</div>
+
+<h2>How the model works</h2>
+<details class="card">
+  <summary style="cursor:pointer;font-weight:650">Show the method and its assumptions</summary>
+  <div style="margin-top: 12px">
+    <ol>
+      <li><strong>Temperature through the day.</strong> The low is fixed at 75&nbsp;°F, the 1991–2020 normal July low at Easterwood Field. <a href="#refs">[1]</a> Temperature rises along a smooth curve from the low at 6&nbsp;a.m. to the slider's high at 4&nbsp;p.m., then falls back overnight. The timing is a standard modeling assumption, not a measured average.</li>
+      <li><strong>Humidity.</strong> The dew point is held at 72&nbsp;°F, the July average at Easterwood Field. <a href="#refs">[2]</a> Relative humidity is computed from temperature and dew point, so it is highest in the morning and lowest in the afternoon, as in real summer days.</li>
+      <li><strong>WBGT in the shade</strong> = 0.7 × wet-bulb temperature + 0.3 × air temperature, the formula for no direct sun. <a href="#refs">[5]</a> Wet-bulb temperature is computed from air temperature and humidity with Stull's equation. <a href="#refs">[4]</a></li>
+      <li><strong>WBGT in the sun</strong> = 0.7 × wet bulb + 0.2 × globe temperature + 0.1 × air temperature. <a href="#refs">[5]</a> Weather stations do not measure globe temperature, so this page assumes it runs up to 12&nbsp;°C (22&nbsp;°F) above air temperature when the sun is highest, scaled by the sun's angle over College Station in mid-July. This is an assumption chosen to sit within published examples, where sunlit globe temperatures are roughly 5 to 17&nbsp;°C above air temperature. <a href="#refs">[8]</a> It ignores wind and clouds, so a breezy or overcast day will be less severe.</li>
+      <li><strong>Safe limit.</strong> NIOSH's limit for acclimatized workers is 56.7 − 11.5 × log<sub>10</sub>(metabolic rate in watts), in °C WBGT; for unacclimatized workers it is 59.9 − 14.1 × log<sub>10</sub>(watts). <a href="#refs">[6]</a> Metabolic rates are OSHA's typical values for a 70&nbsp;kg (154&nbsp;lb) worker: rest 115&nbsp;W, light 180&nbsp;W, moderate 300&nbsp;W, heavy 415&nbsp;W, very heavy 520&nbsp;W. <a href="#refs">[7]</a></li>
+      <li><strong>Rest needed.</strong> Following NIOSH's guidance to compare hourly time-weighted averages, the page finds the largest share of each hour that can be spent working (with the rest spent sitting in the shade) while the hour's average WBGT stays at or under the limit for the hour's average metabolic rate. <a href="#refs">[6]</a></li>
+      <li><strong>Over-limit minutes</strong> = rest needed − rest given, when that is positive. The summer total multiplies one day by 65 workdays (13 weeks of June–August, 5 days a week).</li>
+    </ol>
+    <p><strong>Limits of this model.</strong> It describes a typical day, not a forecast; real worksites should use an on-site WBGT meter. <a href="#refs">[7]</a> NIOSH limits are designed for healthy workers. Age, obesity, some medications, and conditions such as diabetes or heart disease lower heat tolerance, and work clothing or protective gear raises heat stress; none of these are modeled. OSHA notes outdoor workers have died of heat stroke on days when the maximum heat index was only 86&nbsp;°F. <a href="#refs">[7]</a></p>
+  </div>
+</details>
+
+<h2 id="refs">Sources</h2>
+<ol class="refs">
+  <li>National Weather Service Houston/Galveston. <a href="https://www.weather.gov/hgx/climate_cll_normals_jul">July normals, means and extremes for College Station (1991–2020)</a> and <a href="https://weather.gov/media/hgx/climate/summary/Jul_2024_Regional_Climate_Summary.pdf">July 2024 regional climate summary</a> (August normal high 96.6&nbsp;°F, low 74.7&nbsp;°F).</li>
+  <li>Time and Date. <a href="https://www.timeanddate.com/weather/@4682464/climate">Climate and weather averages in College Station (Easterwood Field)</a>: July average dew point 72&nbsp;°F.</li>
+  <li>NOAA Weather Prediction Center. <a href="https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml">The heat index equation</a> (Rothfusz regression with NWS adjustments).</li>
+  <li>Stull, R. (2011). Wet-bulb temperature from relative humidity and air temperature. <em>Journal of Applied Meteorology and Climatology</em>, 50(11), 2267–2269.</li>
+  <li>OSHA. <a href="https://osha.gov/otm/section-3-health-hazards/chapter-4">OSHA Technical Manual, Section III, Chapter 4: Heat Stress</a>; National Weather Service La Crosse, <a href="https://www.weather.gov/arx/wbgt">Wet Bulb Globe Temperature</a>.</li>
+  <li>NIOSH (2016). <a href="https://stacks.cdc.gov/view/cdc/37911">Criteria for a Recommended Standard: Occupational Exposure to Heat and Hot Environments</a>. DHHS (NIOSH) Publication 2016-106. Chapter 8, Figures 8-1 and 8-2.</li>
+  <li>OSHA. <a href="https://www.osha.gov/heat-exposure/hazards">Heat hazard recognition</a> (workload table in watts; direct sun can raise the heat index by up to 13.5&nbsp;°F; deaths at a maximum heat index of 86&nbsp;°F).</li>
+  <li>Duke University Nicholas Institute. <a href="https://nicholasinstitute.duke.edu/project/heat-policy-innovation-hub/what-is-wet-bulb-globe-temperature-wbgt">What is wet bulb globe temperature?</a> (example: air 85&nbsp;°F, globe 115&nbsp;°F); ISGlobal, <a href="https://diccionario.isglobal.org/en/wbgt/">WBGT</a> (example: air 35&nbsp;°C, globe 40&nbsp;°C).</li>
+  <li>OSHA (2024). Heat Injury and Illness Prevention in Outdoor and Indoor Work Settings, proposed rule, 89 Fed. Reg. 70698. Status as of 2026: still proposed, with no final federal standard (<a href="https://www.salussafety.io/us/osha/heat-rule">Salus Safety rule tracker</a>; <a href="https://www.dlapiper.com/en-au/insights/publications/2026/04/osha-proposed-heat-rule">DLA Piper, April 2026</a>).</li>
+  <li>Texas House Bill 2127 (2023), which preempted local ordinances such as the Austin and Dallas water-break rules (<a href="https://houstonlanding.org/with-water-break-rules-blocked-by-new-law-texas-workers-have-few-protections-from-the-heat/">Houston Landing</a>).</li>
+  <li>CPWR – The Center for Construction Research and Training (2025), data bulletin on heat injuries and illnesses in construction, as reported by <a href="https://www.carriermanagement.com/news/2025/08/18/278494.htm">Carrier Management</a> and <a href="https://www.ecmag.com/magazine/articles/article-detail/heat-injuries-and-illnesses-hit-construction-industry-hardest">EC&amp;M</a>.</li>
+  <li>Al-Bouwarthan, M., Quinn, M. M., Kriebel, D., &amp; Wegman, D. H. (2020). <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7312975">Risk of kidney injury among construction workers exposed to heat stress: A longitudinal study from Saudi Arabia</a>. <em>IJERPH</em>, 17(11), 3775.</li>
+  <li>Tourula, E., et al. (2025). <a href="https://stacks.cdc.gov/view/cdc/260029">Hyperthermia predicts cross-shift acute kidney injury risk in construction workers</a>. <em>Kidney International Reports</em>, 10, 2856–2859.</li>
+  <li>Acute kidney injury among Florida construction workers: A pilot study (2024). <em>American Journal of Industrial Medicine</em>. doi:10.1002/ajim.23692.</li>
+  <li>Hospitalised heat-related acute kidney injury in indoor and outdoor workers in the USA (2022). <em>Occupational and Environmental Medicine</em>, 79(3), 184–191. <a href="https://pubmed.ncbi.nlm.nih.gov/34750240/">PubMed</a>.</li>
+  <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11546313">A review of the links between work and heart disease in the 21st century</a> (2024). <em>Methodist DeBakey Cardiovascular Journal</em>, 20(5), 71–80.</li>
+  <li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC13727674/">Heat exposure and cardiovascular risk factors among migrant and seasonal farmworkers in the United States</a> (2026). <em>Journal of Exposure Science &amp; Environmental Epidemiology</em>.</li>
+  <li>Lawton, E. M., Pearce, H., &amp; Gabb, G. M. (2019). Environmental heatstroke and long-term clinical neurological outcomes: A literature review of case reports and case series 2000–2016. <em>Emergency Medicine Australasia</em>, 31(2). doi:10.1111/1742-6723.12990.</li>
+  <li>Yoneda, K., et al. (2024). <a href="https://doaj.org/article/26b1a9d42f1c43aa98d12237aaff440a">How can heatstroke damage the brain? A mini review</a>. <em>Frontiers in Neuroscience</em>.</li>
+</ol>
+
+<footer>
+  <p>Built for a course project on extreme heat. This page is an educational model, not medical or legal advice, and is not a substitute for on-site heat monitoring.</p>
+</footer>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- constants ----------
+  var LOW_F = 75;          // July normal low, Easterwood Field [1]
+  var DEW_F = 72;          // July average dew point, Easterwood Field [2]
+  var M_REST = 115;        // W, resting [7]
+  var WORKLOADS = [
+    { name: "Light", w: 180 },
+    { name: "Moderate", w: 300 },
+    { name: "Heavy", w: 415 },
+    { name: "Very heavy", w: 520 }
+  ];
+  var SHIFT_HOURS = 10;
+  var WORKDAYS = 65;
+  var GLOBE_EXCESS_C = 12;  // assumed peak globe-minus-air difference in full sun
+  var LAT = 30.6, DECL = 21.5, SOLAR_NOON = 13.5; // College Station, mid-July, CDT
+
+  // ---------- physics helpers ----------
+  function fToC(f) { return (f - 32) * 5 / 9; }
+  function cToF(c) { return c * 9 / 5 + 32; }
+  function rad(d) { return d * Math.PI / 180; }
+
+  function airTempF(h, hi) {
+    var lo = LOW_F;
+    if (h < 6) h += 24;
+    if (h <= 16) return lo + (hi - lo) * (1 - Math.cos(Math.PI * (h - 6) / 10)) / 2;
+    return hi - (hi - lo) * (1 - Math.cos(Math.PI * (h - 16) / 14)) / 2;
+  }
+  function satVP(tc) { return 6.112 * Math.exp(17.62 * tc / (243.12 + tc)); } // hPa
+  function relHum(tF, dF) {
+    var d = Math.min(dF, tF);
+    return 100 * satVP(fToC(d)) / satVP(fToC(tF));
+  }
+  function heatIndexF(T, RH) {
+    var simple = 0.5 * (T + 61 + (T - 68) * 1.2 + RH * 0.094);
+    if ((simple + T) / 2 < 80) return simple;
+    var HI = -42.379 + 2.04901523 * T + 10.14333127 * RH - 0.22475541 * T * RH
+      - 0.00683783 * T * T - 0.05481717 * RH * RH + 0.00122874 * T * T * RH
+      + 0.00085282 * T * RH * RH - 0.00000199 * T * T * RH * RH;
+    if (RH < 13 && T >= 80 && T <= 112) HI -= ((13 - RH) / 4) * Math.sqrt((17 - Math.abs(T - 95)) / 17);
+    else if (RH > 85 && T >= 80 && T <= 87) HI += ((RH - 85) / 10) * ((87 - T) / 5);
+    return HI;
+  }
+  function wetBulbC(tc, rh) { // Stull (2011)
+    return tc * Math.atan(0.151977 * Math.sqrt(rh + 8.313659)) + Math.atan(tc + rh)
+      - Math.atan(rh - 1.676331) + 0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh)
+      - 4.686035;
+  }
+  function sunFactor(h) { // 0..1, sine of solar elevation relative to its noon maximum
+    var H = rad(15 * (h - SOLAR_NOON));
+    var s = Math.sin(rad(LAT)) * Math.sin(rad(DECL)) + Math.cos(rad(LAT)) * Math.cos(rad(DECL)) * Math.cos(H);
+    var sMax = Math.cos(rad(LAT - DECL));
+    return Math.max(0, s / sMax);
+  }
+  function conditions(h, hi, sun) {
+    var tF = airTempF(h, hi);
+    var rh = relHum(tF, DEW_F);
+    var tc = fToC(tF);
+    var tw = wetBulbC(tc, rh);
+    var shadeC = 0.7 * tw + 0.3 * tc;
+    var sunC = 0.7 * tw + 0.2 * (tc + GLOBE_EXCESS_C * sunFactor(h)) + 0.1 * tc;
+    return {
+      tF: tF, rh: rh, hiF: heatIndexF(tF, rh),
+      shadeC: shadeC, workC: sun ? sunC : shadeC
+    };
+  }
+  function limitC(M, acc) {
+    var l = Math.log10(M);
+    return acc ? 56.7 - 11.5 * l : 59.9 - 14.1 * l;
+  }
+  // Largest fraction of the hour that can be worked while the hourly time-weighted
+  // average WBGT stays at or under the limit for the time-weighted metabolic rate.
+  function workFraction(workC, restC, M, acc) {
+    function g(f) {
+      var twaW = f * workC + (1 - f) * restC;
+      var twaM = f * M + (1 - f) * M_REST;
+      return twaW - limitC(twaM, acc);
+    }
+    if (g(1) <= 0) return 1;
+    if (g(0) > 0) return 0;
+    var lo = 0, hi = 1;
+    for (var i = 0; i < 40; i++) {
+      var mid = (lo + hi) / 2;
+      if (g(mid) <= 0) lo = mid; else hi = mid;
+    }
+    return lo;
+  }
+  function hourRow(h, s) {
+    var mid = conditions(h + 0.5, s.hi, s.sun);
+    var f = workFraction(mid.workC, mid.shadeC, s.M, s.acc);
+    var need = 60 * (1 - f);
+    var over = Math.max(0, need - s.rest);
+    return { h: h, c: mid, workMin: 60 * f, need: need, over: over };
+  }
+  function shiftRows(s, start) {
+    var rows = [];
+    for (var h = start; h < start + SHIFT_HOURS; h++) rows.push(hourRow(h, s));
+    return rows;
+  }
+  function sum(rows, k) { return rows.reduce(function (a, r) { return a + r[k]; }, 0); }
+
+  function fmtHour(h) {
+    var hh = Math.floor(h) % 24, mm = Math.round((h - Math.floor(h)) * 60);
+    if (mm === 60) { hh = (hh + 1) % 24; mm = 0; }
+    var ap = hh < 12 ? "a.m." : "p.m.";
+    var h12 = hh % 12 === 0 ? 12 : hh % 12;
+    return h12 + ":" + (mm < 10 ? "0" : "") + mm + " " + ap;
+  }
+  function fmtHourShort(h) {
+    var hh = Math.round(h) % 24;
+    var h12 = hh % 12 === 0 ? 12 : hh % 12;
+    return h12 + (hh < 12 ? "a" : "p");
+  }
+
+  // ---------- SVG helpers ----------
+  var NS = "http://www.w3.org/2000/svg";
+  function el(name, attrs, parent, text) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function niceTicks(min, max, n) {
+    var span = max - min, step = Math.pow(10, Math.floor(Math.log10(span / n)));
+    var err = span / n / step;
+    if (err >= 7.5) step *= 10; else if (err >= 3.5) step *= 5; else if (err >= 1.5) step *= 2;
+    var t = [], v = Math.ceil(min / step) * step;
+    for (; v <= max + 1e-9; v += step) t.push(+v.toFixed(6));
+    return t;
+  }
+
+  // ---------- chart 1: WBGT through the day ----------
+  function drawChart1(s, startH) {
+    var svg = document.getElementById("chart1");
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = 760, H = 330, m = { l: 60, r: 16, t: 12, b: 50 };
+    var x0 = 5, x1 = 21;
+    var pts = [];
+    for (var h = x0; h <= x1 + 1e-9; h += 0.25) pts.push({ h: h, c: conditions(h, s.hi, s.sun) });
+    var lim = cToF(limitC(s.M, s.acc));
+    var ys = pts.map(function (p) { return cToF(p.c.workC); }).concat(pts.map(function (p) { return cToF(p.c.shadeC); }), [lim]);
+    var yMin = Math.floor((Math.min.apply(null, ys) - 2) / 5) * 5;
+    var yMax = Math.ceil((Math.max.apply(null, ys) + 2) / 5) * 5;
+    var X = function (h) { return m.l + (h - x0) / (x1 - x0) * (W - m.l - m.r); };
+    var Y = function (v) { return H - m.b - (v - yMin) / (yMax - yMin) * (H - m.t - m.b); };
+
+    el("rect", { x: X(startH), y: m.t, width: X(startH + SHIFT_HOURS) - X(startH), height: H - m.t - m.b, fill: "var(--shift)" }, svg);
+    niceTicks(yMin, yMax, 6).forEach(function (v) {
+      el("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), "class": "grid-line" }, svg);
+      el("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }, svg, v);
+    });
+    for (var t = x0; t <= x1; t += 2) {
+      el("text", { x: X(t), y: H - m.b + 18, "text-anchor": "middle" }, svg, fmtHourShort(t));
+    }
+    el("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: "var(--muted)" }, svg);
+    el("text", { x: (m.l + W - m.r) / 2, y: H - 8, "text-anchor": "middle", "class": "axis-title" }, svg, "Time of day (CDT)");
+    el("text", { transform: "translate(16," + ((m.t + H - m.b) / 2) + ") rotate(-90)", "text-anchor": "middle", "class": "axis-title" }, svg, "WBGT heat stress (°F)");
+
+    el("line", { x1: m.l, x2: W - m.r, y1: Y(lim), y2: Y(lim), stroke: "var(--limit)", "stroke-width": 2.5, "stroke-dasharray": "6 4" }, svg);
+    function path(key, color, dash) {
+      var d = pts.map(function (p, i) { return (i ? "L" : "M") + X(p.h).toFixed(1) + "," + Y(cToF(p.c[key])).toFixed(1); }).join("");
+      var a = { d: d, fill: "none", stroke: color, "stroke-width": 2.5, "stroke-linejoin": "round" };
+      if (dash) a["stroke-dasharray"] = dash;
+      el("path", a, svg);
+    }
+    if (s.sun) path("shadeC", "var(--shade)", "3 4");
+    path("workC", "var(--heat)");
+
+    // peak marker
+    var peak = pts.reduce(function (a, p) { return p.c.workC > a.c.workC ? p : a; });
+    el("circle", { cx: X(peak.h), cy: Y(cToF(peak.c.workC)), r: 4.5, fill: "var(--heat)" }, svg);
+    el("text", { x: X(peak.h), y: Y(cToF(peak.c.workC)) - 10, "text-anchor": "middle", style: "fill:var(--ink);font-weight:600" }, svg,
+      "Peak " + cToF(peak.c.workC).toFixed(1) + "°F at " + fmtHour(peak.h));
+    var labelY = Y(lim) + (Y(lim) > m.t + 30 ? -6 : 16);
+    el("text", { x: W - m.r - 4, y: labelY, "text-anchor": "end", style: "fill:var(--limit);font-weight:600" }, svg,
+      "Limit: " + lim.toFixed(1) + "°F (" + s.wName.toLowerCase() + " work)");
+    return peak;
+  }
+
+  // ---------- chart 2: rest needed per shift hour ----------
+  function drawChart2(rows, s) {
+    var svg = document.getElementById("chart2");
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var W = 760, H = 320, m = { l: 60, r: 16, t: 14, b: 50 };
+    var yMax = 60;
+    var n = rows.length, bw = (W - m.l - m.r) / n;
+    var Y = function (v) { return H - m.b - v / yMax * (H - m.t - m.b); };
+    [0, 15, 30, 45, 60].forEach(function (v) {
+      el("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), "class": "grid-line" }, svg);
+      el("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }, svg, v);
+    });
+    rows.forEach(function (r, i) {
+      var x = m.l + i * bw + bw * 0.15, w = bw * 0.7;
+      var covered = Math.min(r.need, s.rest);
+      if (covered > 0) el("rect", { x: x, y: Y(covered), width: w, height: Y(0) - Y(covered), fill: "var(--bar)", rx: 2 }, svg);
+      if (r.over > 0) el("rect", { x: x, y: Y(r.need), width: w, height: Y(covered) - Y(r.need), fill: "var(--over)", rx: 2 }, svg);
+      if (r.need >= 0.5) el("text", { x: x + w / 2, y: Y(r.need) - 5, "text-anchor": "middle", style: "fill:var(--ink)" }, svg, Math.round(r.need));
+      el("text", { x: x + w / 2, y: H - m.b + 18, "text-anchor": "middle" }, svg, fmtHourShort(r.h));
+    });
+    el("line", { x1: m.l, x2: W - m.r, y1: Y(s.rest), y2: Y(s.rest), stroke: "var(--given)", "stroke-width": 2.5 }, svg);
+    el("text", { x: W - m.r - 4, y: Y(s.rest) - 6, "text-anchor": "end", style: "fill:var(--ink);font-weight:600" }, svg, "Given: " + s.rest + " min/hr");
+    el("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: "var(--muted)" }, svg);
+    el("text", { x: (m.l + W - m.r) / 2, y: H - 8, "text-anchor": "middle", "class": "axis-title" }, svg, "Hour of the shift (start of hour, CDT)");
+    el("text", { transform: "translate(16," + ((m.t + H - m.b) / 2) + ") rotate(-90)", "text-anchor": "middle", "class": "axis-title" }, svg, "Rest needed (minutes per hour)");
+  }
+
+  // ---------- table ----------
+  function drawTable(rows, s) {
+    var tb = document.getElementById("tbody");
+    tb.innerHTML = "";
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      var cells = [
+        fmtHour(r.h),
+        r.c.tF.toFixed(0),
+        r.c.hiF.toFixed(0),
+        cToF(r.c.workC).toFixed(1),
+        Math.round(r.workMin),
+        Math.round(r.need),
+        s.rest,
+        Math.round(r.over)
+      ];
+      cells.forEach(function (v, i) {
+        var td = document.createElement(i === 0 ? "th" : "td");
+        if (i === 0) td.scope = "row";
+        td.textContent = v;
+        if (i === 7 && r.over >= 0.5) td.className = "over";
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    var tr = document.createElement("tr");
+    tr.innerHTML = '<th scope="row">Shift total</th><td></td><td></td><td></td>'
+      + "<td>" + Math.round(sum(rows, "workMin")) + "</td>"
+      + "<td>" + Math.round(sum(rows, "need")) + "</td>"
+      + "<td>" + s.rest * SHIFT_HOURS + "</td>"
+      + '<td class="' + (sum(rows, "over") >= 0.5 ? "over" : "") + '">' + Math.round(sum(rows, "over")) + "</td>";
+    tr.style.fontWeight = "700";
+    tb.appendChild(tr);
+  }
+
+  // ---------- main update ----------
+  var ids = ["hi", "work", "start", "rest", "sun", "acc"];
+  var inputs = {};
+  ids.forEach(function (id) { inputs[id] = document.getElementById(id); });
+
+  function state() {
+    var wl = WORKLOADS[+inputs.work.value];
+    return {
+      hi: +inputs.hi.value,
+      M: wl.w, wName: wl.name,
+      start: +inputs.start.value,
+      rest: +inputs.rest.value,
+      sun: inputs.sun.checked,
+      acc: inputs.acc.checked
+    };
+  }
+
+  function update() {
+    var s = state();
+    document.getElementById("hiOut").textContent = s.hi + " °F";
+    document.getElementById("workOut").textContent = s.wName + " (" + s.M + " W)";
+    document.getElementById("startOut").textContent = fmtHour(s.start) + " – " + fmtHour(s.start + SHIFT_HOURS);
+    document.getElementById("restOut").textContent = s.rest + " min per hour";
+
+    var rows = shiftRows(s, s.start);
+    var peak = drawChart1(s, s.start);
+    drawChart2(rows, s);
+    drawTable(rows, s);
+
+    var over = sum(rows, "over");
+    var first = rows.filter(function (r) { return r.need > s.rest + 0.5; })[0];
+    document.getElementById("sPeak").textContent = fmtHour(peak.h);
+    document.getElementById("sFirst").textContent = first ? fmtHour(first.h) : "None";
+    document.getElementById("sOver").textContent = Math.round(over) + " min";
+    document.getElementById("sSeason").textContent = (over * WORKDAYS / 60).toFixed(0) + " h";
+    document.getElementById("sOverBox").className = "stat" + (over >= 0.5 ? " warn" : "");
+    document.getElementById("sSeasonBox").className = "stat" + (over >= 0.5 ? " warn" : "");
+
+    // compare start times
+    var best = null;
+    for (var st = 5; st <= 10; st++) {
+      var o = sum(shiftRows(s, st), "over");
+      if (!best || o < best.o - 0.5) best = { st: st, o: o };
+    }
+    var needMax = Math.max.apply(null, rows.map(function (r) { return r.need; }));
+    var adv = document.getElementById("advice");
+    var msg;
+    if (over < 0.5) {
+      msg = "<strong>Within the limit.</strong> With these settings, the break schedule covers every hour of the shift. "
+        + (needMax >= 0.5 ? "The hardest hour still needs " + Math.round(needMax) + " minutes of rest, so the breaks are doing real work. Try a hotter day or a heavier workload." : "Try a hotter day, a heavier workload, or a later start to see where the limit is crossed.");
+    } else {
+      msg = "<strong>Over the limit for " + Math.round(over) + " minutes this shift.</strong> ";
+      if (best.st !== s.start && best.o < over - 0.5) {
+        msg += "Starting at " + fmtHour(best.st) + " instead would cut that to " + Math.round(best.o) + " minutes. ";
+      }
+      msg += "To stay under the limit without changing the start time, the hottest hour needs " + Math.round(needMax)
+        + " minutes of rest, not " + s.rest + ".";
+    }
+    adv.innerHTML = msg;
+  }
+
+  ids.forEach(function (id) { inputs[id].addEventListener("input", update); });
+  update();
+
+  // exposed for testing
+  window.__heatModel = { conditions: conditions, limitC: limitC, workFraction: workFraction, shiftRows: shiftRows, heatIndexF: heatIndexF, wetBulbC: wetBulbC };
+})();
+</script>
+</body>
+</html>
