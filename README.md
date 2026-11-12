@@ -8,10 +8,8 @@ Sliders set the day's high temperature, how hard the crew is working, the shift 
 
 ## Group members
 
-- Name 1
-- Name 2
-- Name 3
-- Name 4
+- Noemi Pena
+- Sophia Borger
 
 ## Course concept
 
